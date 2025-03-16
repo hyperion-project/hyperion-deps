@@ -1,0 +1,181 @@
+name: Build Dependencies
+
+on:
+  # Reusable from push_pull.yml
+  workflow_call:
+    inputs:
+      qt_version:
+        type: string
+        description: Build with this Qt version
+        default: '5'
+        required: false
+      build_type:
+        type: string
+        description: The build type (debug or release)
+        default: 'release'
+        required: false
+      upload_artifact:
+        type: boolean
+        description: Upload Artifact to GitHub
+        default: false
+        required: false
+
+jobs:
+
+######################
+###### Linux #########
+######################
+
+  linux:
+    name: 🐧 ${{ matrix.os.description }}
+    runs-on: ${{ matrix.os.architecture[0] == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          { distribution: debian, codename: buster,   description: Debian Buster (x86_64),                        architecture: [ amd64, linux/amd64  ], platform: x11 },
+          { distribution: debian, codename: buster,   description: Debian Buster (Raspberry Pi 1 & Zero 1),       architecture: [ armv6, linux/arm/v6 ], platform: rpi },
+          { distribution: debian, codename: buster,   description: Debian Buster (Raspberry Pi 2),                architecture: [ armv7, linux/arm/v7 ], platform: rpi },
+          { distribution: debian, codename: buster,   description: Debian Buster (Raspberry Pi 3/4/5 & Zero 2),   architecture: [ arm64, linux/arm64  ], platform: rpi },
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (x86_64),                      architecture: [ amd64, linux/amd64  ], platform: x11 },
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi },
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi }
+        ]
+        isQt5:
+          - ${{ inputs.qt_version == '5' }}
+        exclude:
+          - isQt5: true
+            os: { distribution: debian, codename: bullseye }
+          - isQt5: false
+            os: { distribution: debian, codename: buster }
+
+    steps:
+      - name: ⬇ Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: ⬇ Clone hyperion.ng repository
+        uses: actions/checkout@v4
+        with:
+          repository: paulchen-panther/hyperion.ng
+          ref: 'deps'
+          submodules: recursive
+          path: hyperion
+
+      - name: 👷 Build
+        shell: bash
+        run: |
+          mkdir deploy
+          docker run --rm --platform=${{ matrix.os.architecture[1] }} ${{ env.ENTRYPOINT }} \
+            -v "${{ github.workspace }}/deploy:/deploy" \
+            -v "${{ github.workspace }}:/source:rw" \
+            -w "/source" \
+            ghcr.io/hyperion-project/${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} \
+            /bin/bash -c "cmake --preset linux-${{ inputs.build_type }} -DHYPERION_DIR=/source/hyperion -DPLATFORM=${{ matrix.os.platform }} &&
+            cmake --build --preset linux-${{ inputs.build_type }} --target install --parallel $(nproc) &&
+            cp -a /source/build/install/. /deploy/ 2>/dev/null"
+        env:
+          DOCKER_IMAGE: ${{ matrix.os.distribution }}
+          DOCKER_TAG: ${{ matrix.os.codename }}${{ inputs.qt_version == '6' && '-qt6' || '' }}
+          ENTRYPOINT: ${{ matrix.os.architecture[0] != 'amd64' && '--entrypoint /usr/bin/env' || '' }}
+
+      - name: 📦 Upload
+        if: ${{ inputs.upload_artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ format('{0}_{1}-{2}-qt{3}-{4}', matrix.os.distribution, matrix.os.codename, matrix.os.architecture[0], inputs.qt_version, inputs.build_type) }}
+          path: deploy/*
+
+######################
+###### macOS #########
+######################
+
+  macos:
+    name: 🍏 macOS ${{ matrix.architecture }}
+    runs-on: ${{ matrix.architecture == 'arm64' && 'macos-14' || 'macos-13' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [ arm64, x64 ]
+
+    steps:
+      - name: ⬇ Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: ⬇ Clone hyperion.ng repository
+        uses: actions/checkout@v4
+        with:
+          repository: paulchen-panther/hyperion.ng
+          ref: 'deps'
+          submodules: recursive
+          path: hyperion
+
+      - name: 📥 Install dependencies
+        uses: tecolicom/actions-use-homebrew-tools@v1
+        with:
+          tools: qt@${{ inputs.qt_version }}
+          key: ${{ runner.os }}-${{ matrix.architecture }}-homebrew-packages-${{ inputs.qt_version }}
+
+      - name: 👷 Build
+        shell: bash
+        run: |
+          # Remove once issue with hombrew cache action is fixed
+          brew reinstall --formula cmake
+          # Build
+          cmake --preset macos-${{ inputs.build_type }} -DHYPERION_DIR=${{ github.workspace }}/hyperion -DPLATFORM=macos
+          cmake --build --preset macos-${{ inputs.build_type }} --target install --parallel $(sysctl -n hw.ncpu)
+
+      - name: 📦 Upload
+        if: ${{ inputs.upload_artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ format('macos-{0}-qt{1}-{2}', matrix.architecture, inputs.qt_version, inputs.build_type) }}
+          path: build/install/*
+
+######################
+###### Windows #######
+######################
+
+  windows:
+    name: 🪟 Windows x64
+    runs-on: windows-2022
+    steps:
+      - name: ⬇ Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: ⬇ Clone hyperion.ng repository
+        uses: actions/checkout@v4
+        with:
+          repository: paulchen-panther/hyperion.ng
+          ref: 'deps'
+          submodules: recursive
+          path: hyperion
+
+      - name: 📥 Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ inputs.qt_version == '6' && '6.8' || '5.15.*' }}
+          target: 'desktop'
+          cache: 'true'
+          cache-key-prefix: 'cache-qt-windows'
+
+      - name: 🛠️ Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: 👷 Build
+        shell: cmd
+        run: |
+           cmake --preset windows-${{ inputs.build_type }} -DHYPERION_DIR=${{ github.workspace }}/hyperion -DPLATFORM=windows
+           cmake --build --preset windows-${{ inputs.build_type }} --target install --parallel %NUMBER_OF_PROCESSORS%
+
+      - name: 📦 Upload
+        if: ${{ inputs.upload_artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ format('windows-x64-qt{0}-{1}', inputs.qt_version, inputs.build_type) }}
+          path: build/install/*

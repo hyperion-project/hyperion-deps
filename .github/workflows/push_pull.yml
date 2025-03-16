@@ -1,0 +1,84 @@
+name: Build Dependencies
+run-name: |
+  ${{ github.event_name == 'push' && '🌱 Push build -' || '' }}
+  ${{ github.event_name == 'pull_request' && format('📦 Artifacts build for PR {0} - {1}', github.event.pull_request.number, github.event.pull_request.title) || github.event.head_commit.message }}
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - '20[2-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+
+  # GitHub Push/Pull Request
+  github_build:
+    name: Qt ${{ matrix.qt_version }} Build (${{ matrix.build_type }})
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ 'debug', 'release' ]
+        qt_version: [ '5', '6' ]
+    uses: ./.github/workflows/qt5_6.yml
+    secrets: inherit
+    with:
+      qt_version: ${{ matrix.qt_version }}
+      build_type: ${{ matrix.build_type }}
+      upload_artifact: ${{ startsWith(github.event.ref, 'refs/tags') }}
+
+  # Publish to GitHub (Only on tagged commits with date format e.g. 2025-01-31)
+  github_publish:
+    name: Publish to GitHub
+    if: ${{ startsWith(github.event.ref, 'refs/tags') }}
+    needs: github_build
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇ Checkout
+        uses: actions/checkout@v4
+
+      - name: 💾 Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ github.workspace }}/artifacts
+
+      - name: 📦 Repack Artifacts
+        shell: bash
+        run: |
+          json=$(jq -n --arg version "$GITHUB_REF_NAME" --arg baseURL "${{ github.server_url }}/${{ github.repository }}/releases/download" '{version: $version, baseUrl: $baseURL, hashes: {}}')
+          for artifact in ${{ github.workspace }}/artifacts/*/; do
+            echo 📦 Repack $(basename "${artifact%/}-${GITHUB_REF_NAME}.tar.gz")...
+            tar -czf "${artifact%/}-${GITHUB_REF_NAME}.tar.gz" -C "$artifact" .
+            rm -fR "$artifact"
+            fname=$(basename ${artifact%/})
+            IFS='-' read -ra fname <<< "$fname"
+            json=$(jq --arg distribution "${fname[0]}" \
+              --arg architecture "${fname[1]}" \
+              --arg qtVersion "${fname[2]}" \
+              --arg buildType "${fname[3]}" \
+              --arg hash "$(sha256sum "${artifact%/}-${GITHUB_REF_NAME}.tar.gz" | cut -d " " -f 1)" \
+              '.hashes[$distribution][$architecture][$qtVersion][$buildType] = $hash' \
+              <<< "$json")
+          done
+          echo ✏️ Write JSON build spec file and release notes...
+          echo "$json" | jq . > ${{ github.workspace }}/artifacts/buildspec.json
+          shopt -s extglob
+          echo "### SHA256 Checksums" > ${{ github.workspace }}/artifacts/CHECKSUMS.txt
+          for file in ${{ github.workspace }}/artifacts/*.tar.gz; do
+            echo "    ${file##*/}: $(sha256sum "${file}" | cut -d " " -f 1)" >> ${{ github.workspace }}/artifacts/CHECKSUMS.txt
+          done
+
+      - name: 🚀 Upload
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          name: Hyperion Deps Build ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body_path: ${{ github.workspace }}/artifacts/CHECKSUMS.txt
+          files: |
+            ${{ github.workspace }}/artifacts/*.tar.gz
+            ${{ github.workspace }}/artifacts/buildspec.json

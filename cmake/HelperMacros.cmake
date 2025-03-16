@@ -1,0 +1,12 @@
+# Macro to get path of first sub dir of a dir
+macro(FIRSTSUBDIR result curdir)
+	file(GLOB children RELATIVE ${curdir} ${curdir}/*)
+	set(dirlist "")
+	foreach(child ${children})
+		if(IS_DIRECTORY ${curdir}/${child})
+			list(APPEND dirlist "${curdir}/${child}")
+			break()
+		endif()
+	endforeach()
+	set(${result} ${dirlist})
+endmacro()
