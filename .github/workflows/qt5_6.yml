@@ -58,7 +58,7 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v4
         with:
-          repository: paulchen-panther/hyperion.ng
+          repository: hyperion-project/hyperion.ng
           ref: 'deps'
           submodules: recursive
           path: hyperion
@@ -108,7 +108,7 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v4
         with:
-          repository: paulchen-panther/hyperion.ng
+          repository: hyperion-project/hyperion.ng
           ref: 'deps'
           submodules: recursive
           path: hyperion
@@ -151,7 +151,7 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v4
         with:
-          repository: paulchen-panther/hyperion.ng
+          repository: hyperion-project/hyperion.ng
           ref: 'deps'
           submodules: recursive
           path: hyperion
