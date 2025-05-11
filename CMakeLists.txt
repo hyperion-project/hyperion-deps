@@ -286,3 +286,20 @@ set(ENABLE_PROGRAMS OFF CACHE INTERNAL "Build mbedTLS programs")
 set(DISABLE_PACKAGE_CONFIG_AND_INSTALL OFF CACHE INTERNAL "Disable package configuration, target export and installation")
 
 FetchContent_MakeAvailable(mbedtls)
+
+#=============================================================================
+# libjpeg-turbo (Windows)
+#=============================================================================
+
+if(MSVC)
+	ExternalProject_Add(libjpeg-turbo
+		PREFIX				${CMAKE_CURRENT_BINARY_DIR}/libjpeg-turbo
+		GIT_REPOSITORY		https://github.com/libjpeg-turbo/libjpeg-turbo.git
+		GIT_TAG				3.1.0
+		CMAKE_ARGS			-DENABLE_SHARED:BOOL=${BUILD_SHARED_LIBS}
+							-DENABLE_STATIC:BOOL=!${BUILD_SHARED_LIBS}
+							-DCMAKE_INSTALL_LIBDIR:PATH=${CMAKE_INSTALL_PREFIX}/lib
+							-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+							-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+	)
+endif()

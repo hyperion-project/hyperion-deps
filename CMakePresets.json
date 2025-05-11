@@ -22,6 +22,13 @@
       }
     },
     {
+      "name": "relwithdebinfo",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
       "name": "clang",
       "hidden": true,
       "generator": "Ninja",
@@ -75,6 +82,17 @@
       "displayName": "Windows Release (msvc)",
       "description": "Build with MSVC's CL as Release without Debug Symbols",
       "inherits": [ "base", "release", "msvc" ],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "windows-relwithdebinfo",
+      "displayName": "Windows (RelWithDebInfo) (msvc)",
+      "description": "Build with MSVC's CL as Release with Debug Symbols",
+      "inherits": [ "base", "relwithdebinfo", "msvc" ],
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -155,6 +173,19 @@
         "rhs": "Windows"
       }
 
+    },
+    {
+      "name": "windows-relwithdebinfo",
+      "displayName": "Windows (RelWithDebInfo) (msvc)",
+      "description": "Build with MSVC's CL as Release with Debug Symbols",
+      "configuration": "RelWithDebInfo",
+      "targets": "all",
+      "configurePreset": "windows-relwithdebinfo",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
     },
     {
       "name": "windows-debug",

@@ -111,18 +111,17 @@ jobs:
           submodules: recursive
           path: hyperion
 
-      - name: 📥 Install dependencies
-        uses: tecolicom/actions-use-homebrew-tools@v1
+      - name: 📥 Install Qt
+        uses: jurplel/install-qt-action@v4
         with:
-          tools: qt@${{ inputs.qt_version }}
-          key: ${{ runner.os }}-${{ matrix.architecture }}-homebrew-packages-${{ inputs.qt_version }}
+          version: ${{ inputs.qt_version == '6' && '6.8' || '5.15.*' }}
+          target: 'desktop'
+          cache: 'true'
+          cache-key-prefix: 'cache-qt-macos'
 
       - name: 👷 Build
         shell: bash
         run: |
-          # Remove once issue with hombrew cache action is fixed
-          brew reinstall --formula cmake
-          # Build
           cmake --preset macos-${{ inputs.build_type }} -DHYPERION_DIR=${{ github.workspace }}/hyperion -DPLATFORM=macos
           cmake --build --preset macos-${{ inputs.build_type }} --target install --parallel $(sysctl -n hw.ncpu)
 
@@ -138,8 +137,20 @@ jobs:
 ######################
 
   windows:
-    name: 🪟 Windows x64
-    runs-on: windows-2022
+    name: 🪟 Windows ${{ matrix.architecture }}
+    runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2022' }}
+    env:
+      BUILD_TYPE: ${{ inputs.build_type == 'debug' && 'relwithdebinfo' || inputs.build_type }}
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [ arm64, x64 ]
+        isQt5:
+          - ${{ inputs.qt_version == '5' }}
+        exclude:
+          - isQt5: true
+            architecture: arm64
+
     steps:
       - name: ⬇ Checkout
         uses: actions/checkout@v4
@@ -154,25 +165,42 @@ jobs:
           path: hyperion
 
       - name: 📥 Install Qt
-        uses: jurplel/install-qt-action@v4
+        # If the following PR is merged, you can switch back to jurplel/install-qt-action
+        # https://github.com/jurplel/install-qt-action/pull/273
+        uses: jdpurcell/install-qt-action@v5
         with:
-          version: ${{ inputs.qt_version == '6' && '6.8' || '5.15.*' }}
+          version: ${{ inputs.qt_version == '6' && '6.8.*' || '5.15.*' }}
           target: 'desktop'
           cache: 'true'
           cache-key-prefix: 'cache-qt-windows'
 
+      - name: 📥 Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+          architecture: ${{ matrix.architecture }}
+
+      - name: 📥 Install latest CMake and Ninja
+        uses: lukka/get-cmake@latest
+
       - name: 🛠️ Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.architecture }}
+      
+      - name: 🛠️ Setup NASM (x64)
+        if: matrix.architecture == 'x64'
+        uses: ilammy/setup-nasm@v1
 
       - name: 👷 Build
         shell: cmd
         run: |
-           cmake --preset windows-${{ inputs.build_type }} -DHYPERION_DIR=${{ github.workspace }}/hyperion -DPLATFORM=windows
-           cmake --build --preset windows-${{ inputs.build_type }} --target install --parallel %NUMBER_OF_PROCESSORS%
+          cmake --preset windows-${{ env.BUILD_TYPE }} -DHYPERION_DIR=${{ github.workspace }}/hyperion -DPLATFORM=windows
+          cmake --build --preset windows-${{ env.BUILD_TYPE }} --target install --parallel %NUMBER_OF_PROCESSORS%
 
       - name: 📦 Upload
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('windows-x64-qt{0}-{1}', inputs.qt_version, inputs.build_type) }}
+          name: ${{ format('windows-{0}-qt{1}-{2}', matrix.architecture, inputs.qt_version, env.BUILD_TYPE) }}
           path: build/install/*
