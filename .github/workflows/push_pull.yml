@@ -17,17 +17,18 @@ jobs:
 
   # GitHub Push/Pull Request
   github_build:
-    name: Qt ${{ matrix.qt_version }} Build (${{ matrix.build_type }})
+    name: ${{ matrix.build.description }}
     strategy:
       fail-fast: false
       matrix:
-        build_type: [ 'debug', 'release' ]
-        qt_version: [ '5', '6' ]
+        build: [
+          { type: 'debug',   description: 'Debug build' },
+          { type: 'release', description: 'Release build' }
+        ]
     uses: ./.github/workflows/qt5_6.yml
     secrets: inherit
     with:
-      qt_version: ${{ matrix.qt_version }}
-      build_type: ${{ matrix.build_type }}
+      build_type: ${{ matrix.build.type }}
       upload_artifact: ${{ startsWith(github.event.ref, 'refs/tags') }}
 
   # Publish to GitHub (Only on tagged commits with date format e.g. 2025-01-31)

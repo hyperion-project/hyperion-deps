@@ -4,11 +4,6 @@ on:
   # Reusable from push_pull.yml
   workflow_call:
     inputs:
-      qt_version:
-        type: string
-        description: Build with this Qt version
-        default: '5'
-        required: false
       build_type:
         type: string
         description: The build type (debug or release)
@@ -33,21 +28,15 @@ jobs:
       fail-fast: false
       matrix:
         os: [
-          { distribution: debian, codename: buster,   description: Debian Buster (x86_64),                        architecture: [ amd64, linux/amd64  ], platform: x11 },
-          { distribution: debian, codename: buster,   description: Debian Buster (Raspberry Pi 1 & Zero 1),       architecture: [ armv6, linux/arm/v6 ], platform: rpi },
-          { distribution: debian, codename: buster,   description: Debian Buster (Raspberry Pi 2),                architecture: [ armv7, linux/arm/v7 ], platform: rpi },
-          { distribution: debian, codename: buster,   description: Debian Buster (Raspberry Pi 3/4/5 & Zero 2),   architecture: [ arm64, linux/arm64  ], platform: rpi },
-          { distribution: debian, codename: bullseye, description: Debian Bullseye (x86_64),                      architecture: [ amd64, linux/amd64  ], platform: x11 },
-          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi },
-          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi }
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (x86_64),                      architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 1 & Zero 1),     architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '5' }, # Qt6 not available on Debian Bullseye (armv6)
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6' },
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6' },
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (x86_64),                      architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6'},
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 1 & Zero 1),     architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '6' },
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6' },
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6' }
         ]
-        isQt5:
-          - ${{ inputs.qt_version == '5' }}
-        exclude:
-          - isQt5: true
-            os: { distribution: debian, codename: bullseye }
-          - isQt5: false
-            os: { distribution: debian, codename: buster }
 
     steps:
       - name: ⬇ Checkout
@@ -76,14 +65,14 @@ jobs:
             cp -a /source/build/install/. /deploy/ 2>/dev/null"
         env:
           DOCKER_IMAGE: ${{ matrix.os.distribution }}
-          DOCKER_TAG: ${{ matrix.os.codename }}${{ inputs.qt_version == '6' && '-qt6' || '' }}
+          DOCKER_TAG: ${{ matrix.os.codename }}${{ matrix.os.qt_version == '6' && '-qt6' || '' }}
           ENTRYPOINT: ${{ matrix.os.architecture[0] != 'amd64' && '--entrypoint /usr/bin/env' || '' }}
 
       - name: 📦 Upload
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('{0}_{1}-{2}-qt{3}-{4}', matrix.os.distribution, matrix.os.codename, matrix.os.architecture[0], inputs.qt_version, inputs.build_type) }}
+          name: ${{ format('{0}_{1}-{2}-qt{3}-{4}', matrix.os.distribution, matrix.os.codename, matrix.os.architecture[0], matrix.os.qt_version, inputs.build_type) }}
           path: deploy/*
 
 ######################
@@ -114,7 +103,7 @@ jobs:
       - name: 📥 Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ inputs.qt_version == '6' && '6.8' || '5.15.*' }}
+          version: '6.8'
           target: 'desktop'
           cache: 'true'
           cache-key-prefix: 'cache-qt-macos'
@@ -129,7 +118,7 @@ jobs:
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('macos-{0}-qt{1}-{2}', matrix.architecture, inputs.qt_version, inputs.build_type) }}
+          name: ${{ format('macos-{0}-qt6-{1}', matrix.architecture, inputs.build_type) }}
           path: build/install/*
 
 ######################
@@ -145,11 +134,6 @@ jobs:
       fail-fast: false
       matrix:
         architecture: [ arm64, x64 ]
-        isQt5:
-          - ${{ inputs.qt_version == '5' }}
-        exclude:
-          - isQt5: true
-            architecture: arm64
 
     steps:
       - name: ⬇ Checkout
@@ -164,21 +148,20 @@ jobs:
           submodules: recursive
           path: hyperion
 
-      - name: 📥 Install Qt
-        # If the following PR is merged, you can switch back to jurplel/install-qt-action
-        # https://github.com/jurplel/install-qt-action/pull/273
-        uses: jdpurcell/install-qt-action@v5
-        with:
-          version: ${{ inputs.qt_version == '6' && '6.8.*' || '5.15.*' }}
-          target: 'desktop'
-          cache: 'true'
-          cache-key-prefix: 'cache-qt-windows'
-
       - name: 📥 Install Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.13
+          python-version: '3.13.3'
           architecture: ${{ matrix.architecture }}
+
+      - name: 📥 Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.*'
+          target: 'desktop'
+          cache: 'true'
+          cache-key-prefix: 'cache-qt-windows'
+          setup-python: 'false'
 
       - name: 📥 Install latest CMake and Ninja
         uses: lukka/get-cmake@latest
@@ -202,5 +185,5 @@ jobs:
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('windows-{0}-qt{1}-{2}', matrix.architecture, inputs.qt_version, env.BUILD_TYPE) }}
+          name: ${{ format('windows-{0}-qt6-{1}', matrix.architecture, env.BUILD_TYPE) }}
           path: build/install/*
