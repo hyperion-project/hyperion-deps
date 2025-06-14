@@ -83,3 +83,12 @@ jobs:
           files: |
             ${{ github.workspace }}/artifacts/*.tar.gz
             ${{ github.workspace }}/artifacts/buildspec.json
+
+      - name: 🧹 Cleanup
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: |
+            debian_*
+            macos-*
+            windows-*
+          failOnError: false

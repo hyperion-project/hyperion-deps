@@ -236,6 +236,11 @@ set(FLATBUFFERS_BUILD_TESTS OFF CACHE INTERNAL "Build Flatbuffers with tests")
 
 FetchContent_MakeAvailable(flatbuffers)
 
+# Suppress FlatBuffers warnings
+if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND TARGET flatbuffers)
+	target_compile_options(flatbuffers PRIVATE -Wno-deprecated-declarations -Wno-psabi)
+endif()
+
 #=============================================================================
 # Protocol Buffers
 #=============================================================================
@@ -252,15 +257,22 @@ set(protobuf_WITH_ZLIB OFF CACHE INTERNAL "Build protobuf with zlib support")
 # Disable build of libupb
 set(protobuf_BUILD_LIBUPB OFF CACHE INTERNAL "Build libupb")
 
-# Build abeil (3rd party sub-module) with C++ version requirements
+# Build abseil (3rd party sub-module) with C++ version requirements
 set(ABSL_PROPAGATE_CXX_STD ON CACHE INTERNAL "Build abseil-cpp with C++ version requirements propagated")
 
 # Disable static linking of MSVC runtime libraries under Windows
-if (WIN32)
+if(WIN32)
 	set(protobuf_MSVC_STATIC_RUNTIME OFF CACHE INTERNAL "Build protobuf static")
 endif()
 
 FetchContent_MakeAvailable(protobuf)
+
+# Suppress Protobuf warnings
+if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND TARGET libprotobuf AND TARGET libprotoc AND TARGET absl)
+	target_compile_options(libprotobuf PRIVATE -Wno-deprecated-declarations -Wno-psabi)
+	target_compile_options(libprotoc PRIVATE -Wno-deprecated-declarations -Wno-psabi)
+	target_compile_options(absl PRIVATE -Wno-deprecated-declarations -Wno-psabi)
+endif()
 
 #=============================================================================
 # mbedTLS
@@ -286,6 +298,11 @@ set(ENABLE_PROGRAMS OFF CACHE INTERNAL "Build mbedTLS programs")
 set(DISABLE_PACKAGE_CONFIG_AND_INSTALL OFF CACHE INTERNAL "Disable package configuration, target export and installation")
 
 FetchContent_MakeAvailable(mbedtls)
+
+# Can be removed when the issue is resolved: https://github.com/Mbed-TLS/mbedtls/issues/9875
+if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND TARGET mbedcrypto)
+	target_compile_options(mbedcrypto PRIVATE -fomit-frame-pointer)
+endif()
 
 #=============================================================================
 # libjpeg-turbo (Windows)
