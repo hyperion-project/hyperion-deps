@@ -28,15 +28,15 @@ jobs:
       fail-fast: false
       matrix:
         os: [
-          { distribution: debian, codename: bullseye, description: Debian Bullseye (x86_64),                      architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (amd64),                       architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
           { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 1 & Zero 1),     architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '5' }, # Qt6 not available on Debian Bullseye (armv6)
           { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6' },
           { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: bookworm, description: Debian Bookworm (x86_64),                      architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (amd64),                       architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
           { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 1 & Zero 1),     architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '6' },
           { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6' },
           { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: trixie,   description: Debian Trixie (x86_64),                        architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
+          { distribution: debian, codename: trixie,   description: Debian Trixie (amd64),                         architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
           { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 1 & Zero 1),       architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '6' },
           { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 2),                architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6' },
           { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 3/4/5 & Zero 2),   architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6' }
@@ -44,12 +44,12 @@ jobs:
 
     steps:
       - name: ⬇ Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: ⬇ Clone hyperion.ng repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
@@ -85,7 +85,7 @@ jobs:
 
   macos:
     name: 🍏 macOS ${{ matrix.architecture }}
-    runs-on: ${{ matrix.architecture == 'arm64' && 'macos-14' || 'macos-13' }}
+    runs-on: ${{ matrix.architecture == 'x64' && 'macos-15-intel' || 'macos-15' }}
     strategy:
       fail-fast: false
       matrix:
@@ -93,12 +93,12 @@ jobs:
 
     steps:
       - name: ⬇ Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: ⬇ Clone hyperion.ng repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
@@ -131,7 +131,7 @@ jobs:
 
   windows:
     name: 🪟 Windows ${{ matrix.architecture }}
-    runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2022' }}
+    runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2025' }}
     env:
       BUILD_TYPE: ${{ inputs.build_type == 'debug' && 'relwithdebinfo' || inputs.build_type }}
     strategy:
@@ -141,21 +141,21 @@ jobs:
 
     steps:
       - name: ⬇ Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: ⬇ Clone hyperion.ng repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
           path: hyperion
 
       - name: 📥 Install Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.13.3'
+          python-version: '3.13.7'
           architecture: ${{ matrix.architecture }}
 
       - name: 📥 Install Qt
