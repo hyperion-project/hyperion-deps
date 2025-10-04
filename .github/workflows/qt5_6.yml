@@ -51,7 +51,8 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v5
         with:
-          repository: hyperion-project/hyperion.ng
+          repository: lord-grey/hyperion.ng
+          ref: 'deps'
           submodules: recursive
           path: hyperion
 
@@ -100,7 +101,8 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v5
         with:
-          repository: hyperion-project/hyperion.ng
+          repository: lord-grey/hyperion.ng
+          ref: 'deps'
           submodules: recursive
           path: hyperion
 
@@ -148,7 +150,8 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v5
         with:
-          repository: hyperion-project/hyperion.ng
+          repository: lord-grey/hyperion.ng
+          ref: 'deps'
           submodules: recursive
           path: hyperion
 
