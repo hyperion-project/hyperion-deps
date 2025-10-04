@@ -248,14 +248,17 @@ endif()
 cmake_path(SET ProtocolBuffers ${HYPERION_DIR}/dependencies/external/protobuf)
 FetchContent_Declare(protobuf SOURCE_DIR ${ProtocolBuffers})
 
+# Enable ProtoBuf verbose mode
+set(protobuf_VERBOSE ON CACHE BOOL "Build protobuf verbose")
+
 # Disable build of Protobuf tests
 set(protobuf_BUILD_TESTS OFF CACHE INTERNAL "Build protobuf with tests")
 
 # Disable build of Protobuf with zlib support
 set(protobuf_WITH_ZLIB OFF CACHE INTERNAL "Build protobuf with zlib support")
 
-# Disable build of libupb
-set(protobuf_BUILD_LIBUPB OFF CACHE INTERNAL "Build libupb")
+# Enable build of libupb
+set(protobuf_BUILD_LIBUPB ON CACHE INTERNAL "Build libupb")
 
 # Build abseil (3rd party sub-module) with C++ version requirements
 set(ABSL_PROPAGATE_CXX_STD ON CACHE INTERNAL "Build abseil-cpp with C++ version requirements propagated")
