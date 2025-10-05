@@ -260,8 +260,8 @@ set(protobuf_BUILD_TESTS OFF CACHE INTERNAL "Build protobuf with tests")
 # Disable build of Protobuf with zlib support
 set(protobuf_WITH_ZLIB OFF CACHE INTERNAL "Build protobuf with zlib support")
 
-# Disable build of libupb
-set(protobuf_BUILD_LIBUPB OFF CACHE INTERNAL "Build libupb")
+# Enable build of libupb
+set(protobuf_BUILD_LIBUPB ON CACHE INTERNAL "Build libupb")
 
 # Force all dependencies to be downloaded from GitHub
 set(protobuf_FORCE_FETCH_DEPENDENCIES ON CACHE INTERNAL "Force all dependencies to be downloaded from GitHub")
