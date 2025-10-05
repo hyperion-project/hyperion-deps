@@ -262,7 +262,7 @@ set(protobuf_BUILD_LIBUPB ON CACHE INTERNAL "Build libupb")
 
 # Force all dependencies to be downloaded from GitHub
 set(protobuf_FORCE_FETCH_DEPENDENCIES ON CACHE INTERNAL "Force all dependencies to be downloaded from GitHub")
-set(protobuf_LINK_LIBATOMIC OFF CACHE INTERNAL "")
+set(protobuf_HAVE_BUILTIN_ATOMICS ON CACHE INTERNAL "")
 
 # Build abseil (3rd party sub-module) with C++ version requirements
 set(ABSL_PROPAGATE_CXX_STD ON CACHE INTERNAL "Build abseil-cpp with C++ version requirements propagated")
