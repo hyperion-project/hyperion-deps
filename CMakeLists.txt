@@ -252,7 +252,7 @@ FetchContent_Declare(protobuf
  )
 
 # Enable ProtoBuf verbose mode
-set(protobuf_VERBOSE ON CACHE BOOL "Build protobuf verbose")
+set(protobuf_VERBOSE OFF CACHE BOOL "Build protobuf verbose")
 
 # Disable build of Protobuf tests
 set(protobuf_BUILD_TESTS OFF CACHE INTERNAL "Build protobuf with tests")
