@@ -1,5 +1,5 @@
 diff --git a/cmake/protobuf-configure-target.cmake b/cmake/protobuf-configure-target.cmake
-index c67c57056..c6a0ac9fa 100644
+index c67c57056..171e0a8f0 100644
 --- a/cmake/protobuf-configure-target.cmake
 +++ b/cmake/protobuf-configure-target.cmake
 @@ -7,8 +7,8 @@
@@ -13,12 +13,3 @@ index c67c57056..c6a0ac9fa 100644
      endif()
  
      target_compile_features("${target}" PUBLIC cxx_std_17)
-@@ -66,7 +66,7 @@ function(protobuf_configure_unity_target target)
-         if(${CMAKE_VERSION} VERSION_GREATER 3.18 OR ${CMAKE_VERSION} VERSION_EQUAL 3.18)
-             # If protobuf_USE_UNITY_BUILD is set to ON, set target to use Unity builds.
-             set_target_properties("${target}"
--                PROPERTIES 
-+                PROPERTIES
-                 UNITY_BUILD ON
-                 UNITY_BUILD_MODE BATCH
-                 UNITY_BUILD_BATCH_SIZE 50
