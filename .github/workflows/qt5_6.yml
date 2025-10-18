@@ -53,6 +53,7 @@ jobs:
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
+          fetch-depth: 0  # Ensures all tags are fetched
           path: hyperion
 
       - name: 👷 Build
@@ -64,9 +65,11 @@ jobs:
             -v "${{ github.workspace }}:/source:rw" \
             -w "/source" \
             ghcr.io/hyperion-project/${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} \
-            /bin/bash -c "cmake --preset linux-${{ inputs.build_type }} -DHYPERION_DIR=/source/hyperion -DPLATFORM=${{ matrix.os.platform }} &&
-            cmake --build --preset linux-${{ inputs.build_type }} --target install --parallel $(nproc) &&
-            cp -a /source/build/install/. /deploy/ 2>/dev/null"
+            /bin/bash -c "
+              git config --global --add safe.directory /source &&
+              cmake --preset linux-${{ inputs.build_type }} -DHYPERION_DIR=/source/hyperion -DPLATFORM=${{ matrix.os.platform }} &&
+              cmake --build --preset linux-${{ inputs.build_type }} --target install --parallel $(nproc) &&
+              cp -a /source/build/install/. /deploy/ 2>/dev/null"
         env:
           DOCKER_IMAGE: ${{ matrix.os.distribution }}
           DOCKER_TAG: ${{ matrix.os.codename }}${{ matrix.os.qt_version == '6' && '-qt6' || '' }}
@@ -102,6 +105,7 @@ jobs:
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
+          fetch-depth: 0  # Ensures all tags are fetched
           path: hyperion
 
       - name: 📥 Install Qt
@@ -140,16 +144,18 @@ jobs:
         architecture: [ arm64, x64 ]
 
     steps:
+    
       - name: ⬇ Checkout
         uses: actions/checkout@v5
         with:
           submodules: recursive
-
+          
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v5
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
+          fetch-depth: 0  # Ensures all tags are fetched
           path: hyperion
 
       - name: 📥 Install Python
