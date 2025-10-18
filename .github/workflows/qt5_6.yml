@@ -51,8 +51,7 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v5
         with:
-          repository: lord-grey/hyperion.ng
-          ref: 'proto'
+          repository: hyperion-project/hyperion.ng
           submodules: recursive
           fetch-depth: 0  # Ensures all tags are fetched
           path: hyperion
@@ -104,8 +103,7 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v5
         with:
-          repository: lord-grey/hyperion.ng
-          ref: 'proto'
+          repository: hyperion-project/hyperion.ng
           submodules: recursive
           fetch-depth: 0  # Ensures all tags are fetched
           path: hyperion
@@ -155,8 +153,7 @@ jobs:
       - name: ⬇ Clone hyperion.ng repository
         uses: actions/checkout@v5
         with:
-          repository: lord-grey/hyperion.ng
-          ref: 'proto'
+          repository: hyperion-project/hyperion.ng
           submodules: recursive
           fetch-depth: 0  # Ensures all tags are fetched
           path: hyperion
