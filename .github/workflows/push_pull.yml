@@ -56,13 +56,21 @@ jobs:
             rm -fR "$artifact"
             fname=$(basename ${artifact%/})
             IFS='-' read -ra fname <<< "$fname"
-            json=$(jq --arg distribution "${fname[0]}" \
-              --arg architecture "${fname[1]}" \
-              --arg qtVersion "${fname[2]}" \
-              --arg buildType "${fname[3]}" \
-              --arg hash "$(sha256sum "${artifact%/}-${GITHUB_REF_NAME}.tar.gz" | cut -d " " -f 1)" \
-              '.hashes[$distribution][$architecture][$qtVersion][$buildType] = $hash' \
-              <<< "$json")
+            distribution="${fname[0]}"
+            architecture="${fname[1]}"
+            qtVersion="${fname[2]#qt}"
+            buildType="${fname[3]}"
+            hash=$(sha256sum "${artifact%/}-${GITHUB_REF_NAME}.tar.gz" | cut -d " " -f 1)
+            json=$(jq \
+              --arg distribution "$distribution" \
+              --arg architecture "$architecture" \
+              --arg qtVersion "$qtVersion" \
+              --arg buildType "$buildType" \
+              --arg hash "$hash" \
+              '
+                (.hashes[$distribution][$architecture].qt_version = $qtVersion)
+                | (.hashes[$distribution][$architecture][$buildType] = $hash)
+              ' <<< "$json")
           done
           echo ✏️ Write JSON build spec file and release notes...
           echo "$json" | jq . > ${{ github.workspace }}/artifacts/buildspec.json

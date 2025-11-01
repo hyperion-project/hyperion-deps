@@ -28,18 +28,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [
-          { distribution: debian, codename: bullseye, description: Debian Bullseye (amd64),                       architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
-          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 1 & Zero 1),     architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '5' }, # Qt6 not available on Debian Bullseye (armv6)
-          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: bookworm, description: Debian Bookworm (amd64),                       architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
-          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 1 & Zero 1),     architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: trixie,   description: Debian Trixie (amd64),                         architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6' },
-          { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 1 & Zero 1),       architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 2),                architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6' },
-          { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 3/4/5 & Zero 2),   architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6' }
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (amd64),                       architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6.4.2'  },
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 1 & Zero 1),     architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '5.15.2' }, # Qt6 not available on Debian Bullseye (armv6)
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6.4.2'  },
+          { distribution: debian, codename: bullseye, description: Debian Bullseye (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6.4.2'  },
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (amd64),                       architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6.4.2'  },
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 1 & Zero 1),     architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '6.4.2'  },
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 2),              architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6.4.2'  },
+          { distribution: debian, codename: bookworm, description: Debian Bookworm (Raspberry Pi 3/4/5 & Zero 2), architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6.4.2'  },
+          { distribution: debian, codename: trixie,   description: Debian Trixie (amd64),                         architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6.8.2'  },
+          { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 1 & Zero 1),       architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '6.8.2'  },
+          { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 2),                architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6.8.2'  },
+          { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 3/4/5 & Zero 2),   architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6.8.2'  }
         ]
 
     steps:
@@ -72,7 +72,7 @@ jobs:
               cp -a /source/build/install/. /deploy/ 2>/dev/null"
         env:
           DOCKER_IMAGE: ${{ matrix.os.distribution }}
-          DOCKER_TAG: ${{ matrix.os.codename }}${{ matrix.os.qt_version == '6' && '-qt6' || '' }}
+          DOCKER_TAG: ${{ matrix.os.codename }}${{ startsWith(matrix.os.qt_version, '6') && '-qt6' || '' }}
           ENTRYPOINT: ${{ matrix.os.architecture[0] != 'amd64' && '--entrypoint /usr/bin/env' || '' }}
 
       - name: 📦 Upload
@@ -89,6 +89,8 @@ jobs:
   macos:
     name: 🍏 macOS ${{ matrix.architecture }}
     runs-on: ${{ matrix.architecture == 'x64' && 'macos-15-intel' || 'macos-15' }}
+    env:
+      QT_VERSION: '6.9.3'
     strategy:
       fail-fast: false
       matrix:
@@ -111,7 +113,7 @@ jobs:
       - name: 📥 Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.8'
+          version: ${{ env.QT_VERSION }}
           target: 'desktop'
           cache: 'true'
           cache-key-prefix: 'cache-qt-macos'
@@ -126,7 +128,7 @@ jobs:
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('macos-{0}-qt6-{1}', matrix.architecture, inputs.build_type) }}
+          name: ${{ format('macos-{0}-qt{1}-{2}', matrix.architecture, env.QT_VERSION, inputs.build_type) }}
           path: build/install/*
 
 ######################
@@ -138,6 +140,7 @@ jobs:
     runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2025' }}
     env:
       BUILD_TYPE: ${{ inputs.build_type == 'debug' && 'relwithdebinfo' || inputs.build_type }}
+      QT_VERSION: '6.9.3'
     strategy:
       fail-fast: false
       matrix:
@@ -167,7 +170,7 @@ jobs:
       - name: 📥 Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.8.*'
+          version: ${{ env.QT_VERSION }}
           target: 'desktop'
           cache: 'true'
           cache-key-prefix: 'cache-qt-windows'
@@ -195,5 +198,5 @@ jobs:
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('windows-{0}-qt6-{1}', matrix.architecture, env.BUILD_TYPE) }}
+          name: ${{ format('windows-{0}-qt{1}-{2}', matrix.architecture, env.QT_VERSION, env.BUILD_TYPE) }}
           path: build/install/*
