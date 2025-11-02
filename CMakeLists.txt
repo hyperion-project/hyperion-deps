@@ -169,6 +169,8 @@ set(QT_VERSION_TO_BUILD "6.8.2" CACHE STRING "Qt version to build")
 set(QT_CMAKE_ARGS
 	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 	-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+	-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+	-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
 	-DBUILD_SHARED_LIBS:BOOL=OFF
 	-DQT_BUILD_EXAMPLES:BOOL=OFF
 	-DQT_BUILD_TESTS:BOOL=OFF
@@ -177,12 +179,19 @@ set(QT_CMAKE_ARGS
 	-DFEATURE_gui:BOOL=OFF
 	-DFEATURE_widgets:BOOL=OFF
 	-DFEATURE_testlib:BOOL=OFF
-	-DQT_FEATURE_openssl:BOOL=OFF
-	-DQT_FEATURE_icu:BOOL=OFF
-	-DQT_FEATURE_system_zlib:BOOL=OFF
-	-DQT_FEATURE_system_pcre2:BOOL=OFF
+	-DFEATURE_openssl:BOOL=OFF
+	-DFEATURE_icu:BOOL=OFF
+	-DFEATURE_system_zlib:BOOL=OFF
+	-DFEATURE_system_pcre2:BOOL=OFF
+	-DFEATURE_static:BOOL=ON
+	-DFEATURE_static_runtime:BOOL=OFF
 	${APPLE_CONFIGURATION}
 )
+
+# Add generator if using Ninja (required for proper parallel builds)
+if(CMAKE_GENERATOR MATCHES "Ninja")
+	list(APPEND QT_CMAKE_ARGS -G Ninja)
+endif()
 
 # Build Qt6 qtbase from source (minimal static build with Network support)
 ExternalProject_Add(qt6
@@ -194,8 +203,9 @@ ExternalProject_Add(qt6
 	UPDATE_COMMAND		""
 	PATCH_COMMAND		""
 	CMAKE_ARGS			${QT_CMAKE_ARGS}
-	BUILD_COMMAND		cmake --build <BINARY_DIR> --parallel
-	INSTALL_COMMAND		cmake --install <BINARY_DIR>
+	CMAKE_GENERATOR		${CMAKE_GENERATOR}
+	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE} --parallel
+	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
 )
 
 # Set Qt6_DIR to find the built Qt6
@@ -216,10 +226,13 @@ ExternalProject_Add(qmdnsengine
 	CMAKE_ARGS			-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 						-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
 						-DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+						-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
 						-DBUILD_SHARED_LIBS:BOOL=OFF
 						${APPLE_CONFIGURATION}
-	BUILD_COMMAND		cmake --build <BINARY_DIR>
-	INSTALL_COMMAND		cmake --install <BINARY_DIR>
+	CMAKE_GENERATOR		${CMAKE_GENERATOR}
+	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
+	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
 )
 
 #=============================================================================
