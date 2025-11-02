@@ -188,11 +188,6 @@ set(QT_CMAKE_ARGS
 	${APPLE_CONFIGURATION}
 )
 
-# Add generator if using Ninja (required for proper parallel builds)
-if(CMAKE_GENERATOR MATCHES "Ninja")
-	list(APPEND QT_CMAKE_ARGS -G Ninja)
-endif()
-
 # Build Qt6 qtbase from source (minimal static build with Network support)
 ExternalProject_Add(qt6
 	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qt6
@@ -203,7 +198,6 @@ ExternalProject_Add(qt6
 	UPDATE_COMMAND		""
 	PATCH_COMMAND		""
 	CMAKE_ARGS			${QT_CMAKE_ARGS}
-	CMAKE_GENERATOR		${CMAKE_GENERATOR}
 	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE} --parallel
 	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
 )
@@ -230,7 +224,6 @@ ExternalProject_Add(qmdnsengine
 						-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
 						-DBUILD_SHARED_LIBS:BOOL=OFF
 						${APPLE_CONFIGURATION}
-	CMAKE_GENERATOR		${CMAKE_GENERATOR}
 	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
 	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
 )
