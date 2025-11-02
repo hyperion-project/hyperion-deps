@@ -90,7 +90,7 @@ jobs:
     name: 🍏 macOS ${{ matrix.architecture }}
     runs-on: ${{ matrix.architecture == 'x64' && 'macos-15-intel' || 'macos-15' }}
     env:
-      QT_VERSION: '6.9.3'
+      QT_VERSION: '6.8.2'
     strategy:
       fail-fast: false
       matrix:
@@ -109,14 +109,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0  # Ensures all tags are fetched
           path: hyperion
-
-      - name: 📥 Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          target: 'desktop'
-          cache: 'true'
-          cache-key-prefix: 'cache-qt-macos'
 
       - name: 👷 Build
         shell: bash
@@ -140,7 +132,7 @@ jobs:
     runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2025' }}
     env:
       BUILD_TYPE: ${{ inputs.build_type == 'debug' && 'relwithdebinfo' || inputs.build_type }}
-      QT_VERSION: '6.9.3'
+      QT_VERSION: '6.8.2'
     strategy:
       fail-fast: false
       matrix:
@@ -166,15 +158,6 @@ jobs:
         with:
           python-version: '3.13.7'
           architecture: ${{ matrix.architecture }}
-
-      - name: 📥 Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: ${{ env.QT_VERSION }}
-          target: 'desktop'
-          cache: 'true'
-          cache-key-prefix: 'cache-qt-windows'
-          setup-python: 'false'
 
       - name: 📥 Install latest CMake and Ninja
         uses: lukka/get-cmake@latest
