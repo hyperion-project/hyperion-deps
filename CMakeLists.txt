@@ -165,7 +165,7 @@ endif()
 set(QT_VERSION_TO_BUILD "6.8.2" CACHE STRING "Qt version to build")
 
 # Qt6 CMake configure options for static build
-# We build only qtbase with minimal features to get Qt::Core and Qt::Network
+# Building qtbase with required modules for Hyperion.NG: Core, Gui, Network, Sql, Widgets
 set(QT_CMAKE_ARGS
 	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 	-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}/qt6
@@ -174,10 +174,9 @@ set(QT_CMAKE_ARGS
 	-DBUILD_SHARED_LIBS:BOOL=OFF
 	-DQT_BUILD_EXAMPLES:BOOL=OFF
 	-DQT_BUILD_TESTS:BOOL=OFF
-	-DFEATURE_sql:BOOL=OFF
-	-DFEATURE_dbus:BOOL=OFF
-	-DFEATURE_gui:BOOL=OFF
-	-DFEATURE_widgets:BOOL=OFF
+	-DFEATURE_sql:BOOL=ON
+	-DFEATURE_gui:BOOL=ON
+	-DFEATURE_widgets:BOOL=ON
 	-DFEATURE_testlib:BOOL=OFF
 	-DFEATURE_openssl:BOOL=OFF
 	-DFEATURE_icu:BOOL=OFF
@@ -188,9 +187,9 @@ set(QT_CMAKE_ARGS
 	${APPLE_CONFIGURATION}
 )
 
-# Build Qt6 qtbase from source (minimal static build with Network support)
-ExternalProject_Add(qt6
-	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qt6
+# Build Qt6 qtbase from source (static build with Core, Gui, Network, Sql, Widgets)
+ExternalProject_Add(qt6-base
+	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qt6-base
 	GIT_REPOSITORY		https://code.qt.io/qt/qtbase.git
 	GIT_TAG				v${QT_VERSION_TO_BUILD}
 	GIT_SHALLOW			TRUE
@@ -201,6 +200,49 @@ ExternalProject_Add(qt6
 	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE} --parallel
 	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
 )
+
+# Build Qt6 SerialPort module (required by Hyperion.NG)
+ExternalProject_Add(qt6-serialport
+	DEPENDS				qt6-base
+	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qt6-serialport
+	GIT_REPOSITORY		https://code.qt.io/qt/qtserialport.git
+	GIT_TAG				v${QT_VERSION_TO_BUILD}
+	GIT_SHALLOW			TRUE
+	GIT_PROGRESS		TRUE
+	UPDATE_COMMAND		""
+	CMAKE_ARGS			-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+						-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+						-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+						-DBUILD_SHARED_LIBS:BOOL=OFF
+						${APPLE_CONFIGURATION}
+	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE} --parallel
+	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
+)
+
+# Build Qt6 WebSockets module (required by Hyperion.NG)
+ExternalProject_Add(qt6-websockets
+	DEPENDS				qt6-base
+	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qt6-websockets
+	GIT_REPOSITORY		https://code.qt.io/qt/qtwebsockets.git
+	GIT_TAG				v${QT_VERSION_TO_BUILD}
+	GIT_SHALLOW			TRUE
+	GIT_PROGRESS		TRUE
+	UPDATE_COMMAND		""
+	CMAKE_ARGS			-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+						-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+						-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+						-DBUILD_SHARED_LIBS:BOOL=OFF
+						${APPLE_CONFIGURATION}
+	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE} --parallel
+	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
+)
+
+# Convenience target to build all Qt6 modules
+add_custom_target(qt6 DEPENDS qt6-base qt6-serialport qt6-websockets)
 
 # Set Qt6_DIR to find the built Qt6
 set(Qt6_DIR "${CMAKE_INSTALL_PREFIX}/qt6/lib/cmake/Qt6" CACHE PATH "Qt6 CMake directory" FORCE)

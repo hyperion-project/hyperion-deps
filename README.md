@@ -14,19 +14,23 @@ This ensures:
 ### Build Configuration
 
 - **Qt Version**: 6.8.2
-- **Build Type**: Static (minimal configuration)
-- **Components**: Qt Core and Qt Network only
-- **Disabled Features**: GUI, Widgets, SQL, DBus, OpenSSL, ICU
+- **Build Type**: Static
+- **Modules Built**:
+  - **qtbase**: Core, Gui, Network, Sql, Widgets
+  - **qtserialport**: SerialPort
+  - **qtwebsockets**: WebSockets
+- **Disabled Features**: DBus (optional), OpenSSL, ICU
 
 ### Build Time
 
 Building Qt6 from source is time-intensive:
-- **First build**: 30-120 minutes depending on hardware
+- **First build**: 45-180 minutes depending on hardware (increased due to additional modules)
 - **Cached builds**: Much faster due to GitHub Actions caching
 
 ### Platform Support
 
 Qt6 6.8.2 static builds are created for:
 - **Linux**: All Debian distributions (Bullseye, Bookworm, Trixie) and architectures (amd64, armv6, armv7, arm64)
+  - Note: Debian Bullseye armv6 uses Qt 5.15.2 due to Docker image availability
 - **macOS**: arm64 and x64 architectures
 - **Windows**: arm64 and x64 architectures
