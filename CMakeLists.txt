@@ -158,71 +158,117 @@ if(PLATFORM_MATCHES_RPI)
 endif()
 
 #=============================================================================
-# QMdnsEngine
+# Qt6 (Build statically from source)
 #=============================================================================
 
-# Allow to overwrite QT base directory
-# Either supply QTDIR as -DQTDIR=<path> to cmake or set and environment variable QTDIR pointing to the Qt installation
-# For Windows and macOS, the default Qt installation path are tried to resolved automatically
-if(NOT DEFINED QTDIR)
-	if(DEFINED ENV{QTDIR})
-		set(QTDIR $ENV{QTDIR})
-	else()
-		if(MSVC)
-			FIRSTSUBDIR(SUBDIRQT "C:/Qt")
-			if(NOT ${SUBDIRQT} STREQUAL "")
-				set(QTDIR "${SUBDIRQT}/msvc2019_64")
-			endif()
-		elseif (APPLE)
-			foreach(QT_VERSION 6 5)
-				execute_process(
-					COMMAND brew --prefix qt@${QT_VERSION}
-					RESULT_VARIABLE DETECT_QT
-					OUTPUT_VARIABLE QT_LOCATION
-					ERROR_QUIET
-					OUTPUT_STRIP_TRAILING_WHITESPACE
-				)
-				if(${DETECT_QT} EQUAL 0 AND EXISTS ${QT_LOCATION})
-					set(QTDIR ${QT_LOCATION})
-					break()
-				endif()
-			endforeach()
-		endif()
-	endif()
-endif()
+# Set Qt version to build
+set(QT_VERSION_TO_BUILD "6.8.2" CACHE STRING "Qt version to build")
 
-if(DEFINED QTDIR)
-	message(STATUS "Add QTDIR: ${QTDIR} to CMAKE_PREFIX_PATH")
-	list(PREPEND CMAKE_PREFIX_PATH
-		${QTDIR}
-		${QTDIR}/lib
-	)
-endif()
+# Qt6 CMake configure options for static build
+# Building qtbase with required modules for Hyperion.NG: Core, Gui, Network, Sql, Widgets
+set(QT_CMAKE_ARGS
+	-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+	-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+	-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+	-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+	-DBUILD_SHARED_LIBS:BOOL=OFF
+	-DQT_BUILD_EXAMPLES:BOOL=OFF
+	-DQT_BUILD_TESTS:BOOL=OFF
+	-DFEATURE_sql:BOOL=ON
+	-DFEATURE_gui:BOOL=ON
+	-DFEATURE_widgets:BOOL=ON
+	-DFEATURE_testlib:BOOL=OFF
+	-DFEATURE_openssl:BOOL=OFF
+	-DFEATURE_icu:BOOL=OFF
+	-DFEATURE_system_zlib:BOOL=OFF
+	-DFEATURE_system_pcre2:BOOL=OFF
+	-DFEATURE_static:BOOL=ON
+	-DFEATURE_static_runtime:BOOL=OFF
+	${APPLE_CONFIGURATION}
+)
 
-# find Qt Network library for QMdnsEngine
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Network REQUIRED)
-message(STATUS "Found Qt Version: ${QT_VERSION}")
+# Build Qt6 qtbase from source (static build with Core, Gui, Network, Sql, Widgets)
+ExternalProject_Add(qt6-base
+	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qt6-base
+	GIT_REPOSITORY		https://code.qt.io/qt/qtbase.git
+	GIT_TAG				v${QT_VERSION_TO_BUILD}
+	GIT_SHALLOW			TRUE
+	GIT_PROGRESS		TRUE
+	UPDATE_COMMAND		""
+	PATCH_COMMAND		""
+	CMAKE_ARGS			${QT_CMAKE_ARGS}
+	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE} --parallel
+	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
+)
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-	set(QT_MIN_VERSION "6.2.2")
-else()
-	set(QT_MIN_VERSION "5.9.0")
-endif()
+# Build Qt6 SerialPort module (required by Hyperion.NG)
+ExternalProject_Add(qt6-serialport
+	DEPENDS				qt6-base
+	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qt6-serialport
+	GIT_REPOSITORY		https://code.qt.io/qt/qtserialport.git
+	GIT_TAG				v${QT_VERSION_TO_BUILD}
+	GIT_SHALLOW			TRUE
+	GIT_PROGRESS		TRUE
+	UPDATE_COMMAND		""
+	CMAKE_ARGS			-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+						-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+						-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+						-DBUILD_SHARED_LIBS:BOOL=OFF
+						${APPLE_CONFIGURATION}
+	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE} --parallel
+	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
+)
 
-if("${QT_VERSION}" VERSION_LESS "${QT_MIN_VERSION}")
-	message(FATAL_ERROR "Your Qt version is to old! Minimum required ${QT_MIN_VERSION}")
-endif()
+# Build Qt6 WebSockets module (required by Hyperion.NG)
+ExternalProject_Add(qt6-websockets
+	DEPENDS				qt6-base
+	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qt6-websockets
+	GIT_REPOSITORY		https://code.qt.io/qt/qtwebsockets.git
+	GIT_TAG				v${QT_VERSION_TO_BUILD}
+	GIT_SHALLOW			TRUE
+	GIT_PROGRESS		TRUE
+	UPDATE_COMMAND		""
+	CMAKE_ARGS			-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+						-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+						-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+						-DBUILD_SHARED_LIBS:BOOL=OFF
+						${APPLE_CONFIGURATION}
+	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE} --parallel
+	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
+)
 
-find_package(Qt${QT_VERSION_MAJOR} ${QT_VERSION} COMPONENTS Network REQUIRED)
-message(STATUS "Qt version used: ${QT_VERSION}")
+# Convenience target to build all Qt6 modules
+add_custom_target(qt6 DEPENDS qt6-base qt6-serialport qt6-websockets)
+
+# Set Qt6_DIR to find the built Qt6
+set(Qt6_DIR "${CMAKE_INSTALL_PREFIX}/qt6/lib/cmake/Qt6" CACHE PATH "Qt6 CMake directory" FORCE)
+list(PREPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/qt6)
+
+#=============================================================================
+# QMdnsEngine (depends on Qt6)
+#=============================================================================
 
 cmake_path(SET QMdnsEngine ${HYPERION_DIR}/dependencies/external/qmdnsengine)
-FetchContent_Declare(qmdns SOURCE_DIR ${QMdnsEngine})
 
-# Suppress warnings about "Compatibility with CMake < 3.5 will be removed from a future version of CMake"
-set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
-
-FetchContent_MakeAvailable(qmdns)
+# Convert QMdnsEngine to ExternalProject to properly handle Qt6 dependency
+ExternalProject_Add(qmdnsengine
+	DEPENDS				qt6
+	PREFIX				${CMAKE_CURRENT_BINARY_DIR}/qmdnsengine
+	SOURCE_DIR			${QMdnsEngine}
+	CMAKE_ARGS			-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+						-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+						-DCMAKE_PREFIX_PATH:PATH=${CMAKE_INSTALL_PREFIX}/qt6
+						-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+						-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+						-DBUILD_SHARED_LIBS:BOOL=OFF
+						${APPLE_CONFIGURATION}
+	BUILD_COMMAND		cmake --build <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
+	INSTALL_COMMAND		cmake --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
+)
 
 #=============================================================================
 # FlatBuffers

@@ -31,3 +31,4 @@ CMakeSettings.json
 
 # User defined CMake preset file.
 CMakeUserPresets.json
+hyperion/
