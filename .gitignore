@@ -30,4 +30,5 @@ CMakeSettings.json
 !.vs/launch.vs.json
 
 # User defined CMake preset file.
-CMakeUserPresets.jsonhyperion/
+CMakeUserPresets.json
+hyperion/
