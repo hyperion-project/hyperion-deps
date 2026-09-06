@@ -119,7 +119,7 @@ jobs:
 
       - name: 📥 Install Python dependencies
         shell: bash
-        run: pip3 install --break-system-packages jsonschema
+        run: pip3 install --user jsonschema
 
       - name: 👷 Build
         shell: bash
