@@ -117,6 +117,10 @@ jobs:
           cache: 'true'
           cache-key-prefix: 'cache-qt-macos'
 
+      - name: 📥 Install Python dependencies
+        shell: bash
+        run: pip3 install --break-system-packages jsonschema
+
       - name: 👷 Build
         shell: bash
         run: |
