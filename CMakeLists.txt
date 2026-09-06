@@ -327,7 +327,7 @@ FetchContent_Declare(mbedtls SOURCE_DIR ${mbedTLS})
 # mbedTLS/TF-PSA-Crypto default GEN_FILES to OFF on Windows hosts (assuming a release
 # tarball with pre-generated sources). Since we build from a git checkout, the generated
 # sources (e.g. error.c, ssl_debug_helpers_generated.c, psa_crypto_driver_wrappers_no_static.c)
-# do not exist yet, so force generation on regardless of host OS.
+# do not exist yet, so force generation regardless of host OS.
 set(GEN_FILES ON CACHE BOOL "Generate the auto-generated files as needed" FORCE)
 
 # Build mbedTLS as static library
