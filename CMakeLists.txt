@@ -248,7 +248,6 @@ endif()
 cmake_path(SET ProtocolBuffers ${HYPERION_DIR}/dependencies/external/protobuf)
 FetchContent_Declare(protobuf
 	SOURCE_DIR ${ProtocolBuffers}
-	PATCH_COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/patch/protobuf.diff
  )
 
 # Enable ProtoBuf verbose mode
@@ -276,11 +275,46 @@ endif()
 
 FetchContent_MakeAvailable(protobuf)
 
-# Suppress Protobuf warnings
-if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND TARGET libprotobuf AND TARGET libprotoc AND TARGET absl)
-	target_compile_options(libprotobuf PRIVATE -Wno-deprecated-declarations -Wno-psabi)
-	target_compile_options(libprotoc PRIVATE -Wno-deprecated-declarations -Wno-psabi)
-	target_compile_options(absl PRIVATE -Wno-deprecated-declarations -Wno-psabi)
+# Suppress Protobuf, Abseil and UPB warnings
+function(suppress_target_warnings dir)
+    # Recursively traverse all subdirectories added by CMake
+    get_property(subdirs DIRECTORY "${dir}" PROPERTY SUBDIRECTORIES)
+    foreach(subdir IN LISTS subdirs)
+        suppress_target_warnings("${subdir}")
+    endforeach()
+    
+    # Retrieve all targets created specifically in this directory
+    get_property(targets DIRECTORY "${dir}" PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(target IN LISTS targets)
+        get_target_property(target_type ${target} TYPE)
+        if(target_type MATCHES "^(STATIC_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|OBJECT_LIBRARY|EXECUTABLE)$")
+            if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+                target_compile_options(${target} PRIVATE
+                    -Wno-deprecated-declarations
+                    -Wno-psabi
+                    $<$<COMPILE_LANGUAGE:C>:-Wno-pointer-to-int-cast>
+                    $<$<COMPILE_LANGUAGE:C>:-Wno-int-to-pointer-cast>
+                )
+            elseif(MSVC)
+                target_compile_options(${target} PRIVATE /wd4996 /wd4311 /wd4302)
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
+if(DEFINED protobuf_SOURCE_DIR)
+    suppress_target_warnings("${protobuf_SOURCE_DIR}")
+endif()
+
+# Note: Abseil occasionally exposes `absl_SOURCE_DIR` instead of `abseil-cpp_SOURCE_DIR`
+if(DEFINED abseil-cpp_SOURCE_DIR)
+    suppress_target_warnings("${abseil-cpp_SOURCE_DIR}")
+elseif(DEFINED absl_SOURCE_DIR)
+    suppress_target_warnings("${absl_SOURCE_DIR}")
+endif()
+
+if(DEFINED ProtocolBuffers_SOURCE_DIR)
+    suppress_target_warnings("${ProtocolBuffers_SOURCE_DIR}")
 endif()
 
 #=============================================================================
@@ -293,12 +327,15 @@ FetchContent_Declare(mbedtls SOURCE_DIR ${mbedTLS})
 # Build mbedTLS as static library
 set(USE_SHARED_MBEDTLS_LIBRARY ${BUILD_SHARED_LIBS} CACHE INTERNAL "Disable mbedTLS shared libraries")
 set(USE_STATIC_MBEDTLS_LIBRARY !${BUILD_SHARED_LIBS} CACHE INTERNAL "Enable mbedTLS static libraries")
+set(USE_SHARED_TF_PSA_CRYPTO_LIBRARY ${BUILD_SHARED_LIBS} CACHE INTERNAL "Disable TF-PSA-Crypto shared libraries")
+set(USE_STATIC_TF_PSA_CRYPTO_LIBRARY !${BUILD_SHARED_LIBS} CACHE INTERNAL "Enable TF-PSA-Crypto static libraries")
 
 # Disable build of mbedTLS tests
 set(ENABLE_TESTING OFF CACHE INTERNAL "Build mbedTLS tests")
 
 # Disable fatal warnings
 set(MBEDTLS_FATAL_WARNINGS OFF CACHE INTERNAL "Compiler warnings treated as errors")
+set(TF_PSA_CRYPTO_FATAL_WARNINGS OFF CACHE INTERNAL "Compiler warnings treated as errors")
 
 # Disable build of mbedTLS program building
 set(ENABLE_PROGRAMS OFF CACHE INTERNAL "Build mbedTLS programs")
@@ -309,8 +346,17 @@ set(DISABLE_PACKAGE_CONFIG_AND_INSTALL OFF CACHE INTERNAL "Disable package confi
 FetchContent_MakeAvailable(mbedtls)
 
 # Can be removed when the issue is resolved: https://github.com/Mbed-TLS/mbedtls/issues/9875
-if(CMAKE_C_COMPILER_ID MATCHES "GNU" AND TARGET mbedcrypto)
-	target_compile_options(mbedcrypto PRIVATE -fomit-frame-pointer)
+# Workaround for register constraint issues on 32-bit ARM in Debug builds
+if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+    foreach(target mbedcrypto tfpsacrypto builtin)
+        if(TARGET ${target})
+            # -fomit-frame-pointer frees up a register (r7 / fp)
+            target_compile_options(${target} PRIVATE -fomit-frame-pointer)
+            
+            # Optionally force -O1 for Debug builds if -fomit-frame-pointer alone isn't enough:
+            # target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>:-O1>)
+        endif()
+    endforeach()
 endif()
 
 #=============================================================================
