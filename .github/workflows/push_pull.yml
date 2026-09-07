@@ -50,7 +50,7 @@ jobs:
           swap-storage: false
 
       - name: ⬇ Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 💾 Download Artifacts
         uses: actions/download-artifact@v5

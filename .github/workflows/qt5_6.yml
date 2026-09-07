@@ -43,12 +43,12 @@ jobs:
 
     steps:
       - name: ⬇ Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
       - name: ⬇ Clone hyperion.ng repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
@@ -97,12 +97,12 @@ jobs:
 
     steps:
       - name: ⬇ Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
       - name: ⬇ Clone hyperion.ng repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
@@ -151,12 +151,12 @@ jobs:
     steps:
     
       - name: ⬇ Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           
       - name: ⬇ Clone hyperion.ng repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: hyperion-project/hyperion.ng
           submodules: recursive
