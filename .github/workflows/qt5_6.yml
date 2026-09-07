@@ -76,7 +76,7 @@ jobs:
 
       - name: 📦 Upload
         if: ${{ inputs.upload_artifact }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ format('{0}_{1}-{2}-qt{3}-{4}', matrix.os.distribution, matrix.os.codename, matrix.os.architecture[0], matrix.os.qt_version, inputs.build_type) }}
           path: deploy/*
@@ -128,7 +128,7 @@ jobs:
 
       - name: 📦 Upload
         if: ${{ inputs.upload_artifact }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ format('macos-{0}-qt{1}-{2}', matrix.architecture, env.QT_VERSION, inputs.build_type) }}
           path: build/install/*
@@ -201,7 +201,7 @@ jobs:
 
       - name: 📦 Upload
         if: ${{ inputs.upload_artifact }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ format('windows-{0}-qt{1}-{2}', matrix.architecture, env.QT_VERSION, env.BUILD_TYPE) }}
           path: build/install/*
