@@ -37,6 +37,7 @@ jobs:
           { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 2),                architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6.8.2'  },
           { distribution: debian, codename: trixie,   description: Debian Trixie (Raspberry Pi 3/4/5 & Zero 2),   architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6.8.2'  },
           { distribution: debian, codename: forky,    description: Debian Forky  (amd64),                         architecture: [ amd64, linux/amd64  ], platform: x11, qt_version: '6.11.2'  },
+          { distribution: debian, codename: forky,    description: Debian Forky  (Raspberry Pi 1 & Zero 1),       architecture: [ armv6, linux/arm/v6 ], platform: rpi, qt_version: '6.11.2'  },
           { distribution: debian, codename: forky,    description: Debian Forky  (Raspberry Pi 2),                architecture: [ armv7, linux/arm/v7 ], platform: rpi, qt_version: '6.11.2'  },
           { distribution: debian, codename: forky,    description: Debian Forky  (Raspberry Pi 3/4/5 & Zero 2),   architecture: [ arm64, linux/arm64  ], platform: rpi, qt_version: '6.11.2'  }          
         ]
